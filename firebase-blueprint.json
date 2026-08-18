@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user profile information and role.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "role": { "type": "string", "enum": ["teen", "parent"], "description": "The user's role in the application." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the profile was created." }
+      },
+      "required": ["uid", "email", "displayName", "role", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message in a chat conversation between a teen and the assistant.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who sent or received the message." },
+        "text": { "type": "string", "description": "The content of the message." },
+        "sender": { "type": "string", "enum": ["user", "assistant"], "description": "Who sent the message." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the message was sent." },
+        "isHearted": { "type": "boolean", "description": "Whether the message has been hearted by the teen." },
+        "theme": { "type": "string", "description": "The extracted wellbeing theme (assistant messages only)." }
+      },
+      "required": ["userId", "text", "sender", "timestamp"]
+    },
+    "ParentTheme": {
+      "title": "Parent Theme",
+      "description": "Anonymized wellbeing themes shared with parents.",
+      "type": "object",
+      "properties": {
+        "parentId": { "type": "string", "description": "The ID of the parent who can view this theme." },
+        "childId": { "type": "string", "description": "The ID of the child the theme relates to." },
+        "theme": { "type": "string", "description": "The wellbeing theme identified." },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "When the theme was last updated." }
+      },
+      "required": ["parentId", "childId", "theme", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles."
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Chat messages for a specific teen."
+    },
+    "/parentThemes/{themeId}": {
+      "schema": "ParentTheme",
+      "description": "Anonymized themes for parent connection."
+    }
+  }
+}

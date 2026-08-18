@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required) - The user's UID
+    //   - email: string (required) - The user's email
+    //   - displayName: string (required) - The user's name
+    //   - role: string (required, enum: ['teen', 'parent']) - The user's role
+    //   - createdAt: string (required, ISO 8601) - Creation timestamp
+    //
+    // Collection: users/{userId}/messages
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - The ID of the user
+    //   - text: string (required) - Message content
+    //   - sender: string (required, enum: ['user', 'assistant']) - Who sent it
+    //   - timestamp: string (required, ISO 8601) - When sent
+    //   - isHearted: boolean (optional) - If hearted by teen
+    //   - theme: string (optional) - Wellbeing theme (assistant only)
+    //
+    // Collection: parentThemes
+    // Document ID: auto-generated
+    // Fields:
+    //   - parentId: string (required) - The ID of the parent
+    //   - childId: string (required) - The ID of the child
+    //   - theme: string (required) - The wellbeing theme
+    //   - lastUpdated: string (required, ISO 8601) - Last update time
+    //
+    // ===============================================================
+
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "chellamjerlin@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() > 3 && email.size() < 255 && email.matches(".+@.+\\..+");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*");
+    }
+
+    // --- Domain Validators ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'createdAt']) &&
+             data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && isValidEmail(data.email) &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             data.role in ['teen', 'parent', 'admin'] &&
+             isValidDateString(data.createdAt);
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['userId', 'text', 'sender', 'timestamp']) &&
+             data.keys().hasOnly(['userId', 'text', 'sender', 'timestamp', 'isHearted', 'theme']) &&
+             data.userId == request.auth.uid &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 5000 &&
+             data.sender in ['user', 'assistant'] &&
+             isValidDateString(data.timestamp) &&
+             (!('isHearted' in data) || data.isHearted is bool) &&
+             (!('theme' in data) || (data.theme is string && data.theme.size() < 100));
+    }
+
+    function isValidTheme(data) {
+      return data.keys().hasAll(['parentId', 'childId', 'theme', 'lastUpdated']) &&
+             data.keys().hasOnly(['parentId', 'childId', 'theme', 'lastUpdated']) &&
+             data.childId == request.auth.uid &&
+             data.parentId is string &&
+             data.theme is string && data.theme.size() > 0 && data.theme.size() < 100 &&
+             isValidDateString(data.lastUpdated);
+    }
+
+    // --- Rules ---
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role != 'admin' || isAdmin());
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
+      
+      match /messages/{messageId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidMessage(request.resource.data);
+        allow update: if isOwner(userId) && isValidMessage(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /parentThemes/{themeId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.parentId || request.auth.uid == resource.data.childId || isAdmin());
+      allow create: if isAuthenticated() && isValidTheme(request.resource.data);
+      allow update: if isAuthenticated() && isValidTheme(request.resource.data) && (request.auth.uid == resource.data.childId || isAdmin());
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

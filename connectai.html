@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buddy Chat - Your Safe Space</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- YOUR CSS FILE - ADD THIS LINE -->
+    <link rel="stylesheet" href="connectai.css">
+    <!-- Lottie Player for animated avatar -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- ========== AVATAR SECTION ========== -->
+    <div class="avatar-section" id="avatarSection">
+      <div class="avatar-wrapper">
+        <!-- Default idle animation -->
+        <lottie-player 
+          id="avatarPlayer"
+          src="https://lottie.host/4db68bbd-31f6-4cd8-84eb-189de081159a/IGmMCqhzpt.lottie"
+          background="transparent"
+          speed="1"
+          loop
+          autoplay
+          style="width: 200px; height: 200px;">
+        </lottie-player>
+        
+        <!-- Speech bubble that appears with messages -->
+        <div class="avatar-speech-bubble" id="avatarBubble">
+          <span id="bubbleText">Hey! I'm here for you 💛</span>
+        </div>
+      </div>
+      
+      <!-- Mood indicator -->
+      <div class="mood-bar" id="moodBar">
+        <span class="mood-emoji" id="moodEmoji">😊</span>
+        <div class="mood-track">
+          <div class="mood-fill" id="moodFill" style="width: 70%"></div>
+        </div>
+      </div>
+      
+      <!-- Connection status with parent -->
+      <div class="connection-badge" id="connectionBadge">
+        <i class="fas fa-link"></i>
+        <span>Connected with Parent</span>
+      </div>
+    </div>
+    
+    <!-- ========== CHAT SECTION ========== -->
+    <div class="chat-section">
+      <div class="chat-container" id="chatContainer">
+        <!-- Messages appear here -->
+      </div>
+      
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+      
+      <div class="input-section">
+        <div class="input-wrapper">
+          <button class="mic-button" id="micButton" aria-label="Voice input">
+            <i class="fas fa-microphone"></i>
+          </button>
+          <input 
+            type="text" 
+            class="message-input" 
+            id="messageInput"
+            placeholder="Type or speak what's on your mind..."
+            aria-label="Message input">
+          <button class="send-button" id="sendButton">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- YOUR JS FILE - should be at the bottom, before </body> -->
+  <script src="connectai.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "name": "Remix: lumin&us® connectAI",
+  "description": "A warm, non-judgmental wellbeing companion for teenagers and a connection tool for families.",
+  "requestFramePermissions": ["microphone"]
+}
